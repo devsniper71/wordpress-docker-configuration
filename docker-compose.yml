@@ -1,0 +1,62 @@
+version: '3.9'
+services:
+
+  # PHP Service
+  wpid-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mdrasel24633/wpid
+    container_name: wpid-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: wpid-app-service
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ../:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  # Nginx Service
+  wpid-nginx:
+    image: nginx:1.21
+    container_name: wpid-nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 8101:80
+    volumes:
+      - ../:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+# MariaDB Service
+  wpid-mariadb:
+    image: mariadb:10.6
+    container_name: wpid-mariadb
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 3311:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=pa55word
+      - MYSQL_DATABASE=wpid_db
+    volumes:
+      - ../:/var/www
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-network
+
+# Docker Networks
+networks:
+  app-network:
+    external:
+      name: wpid-app-pre-existing-network
+#Volumes
+volumes:
+  dbdata:
+    driver: local
